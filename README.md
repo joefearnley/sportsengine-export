@@ -1,26 +1,47 @@
-# SportsEngine event CSV export
+# SportsEngine Schedule
 
-Export a SportsEngine iCalendar feed to `events.csv`:
+A small local web app that imports a SportsEngine iCalendar feed into SQLite,
+shows the events in a searchable list, and downloads them as CSV.
+The schedule defaults to Games and can also show Other Events (Practice,
+Skills & Drills, Goalie Clinic, and Power Skate) or All events. It can also be
+searched by event name or location.
+
+## Run locally
+
+Requires Node.js 20 or newer.
+
+```sh
+npm install
+npm run dev
+```
+
+Open the local address printed by Vite (normally `http://localhost:5173`).
+Paste the SportsEngine calendar link beginning with `webcal://` and choose
+**Import schedule**. The calendar URL is saved in this browser for next time.
+The feed is fetched by the local backend, which stores its events in
+`data/events.sqlite`. Use **Download CSV** to export the stored rows.
+
+The server only accepts the HTTPS/webcal feed host `ical.sportngin.com` and
+binds to localhost. It does not require a SportsEngine password.
+
+## Production build
+
+```sh
+npm run build
+NODE_ENV=production npm start
+```
+
+The production server serves both the web app and API at
+`http://127.0.0.1:3001`.
+
+## Tests
+
+```sh
+npm test
+```
+
+The original command-line CSV exporter is still available:
 
 ```sh
 python3 sportsengine_export.py 'webcal://ical.sportngin.com/v3/calendar/ical?team_ids=YOUR_TEAM_ID'
-```
-
-Choose a different output path with `-o`:
-
-```sh
-python3 sportsengine_export.py 'YOUR_CALENDAR_URL' -o schedule.csv
-```
-
-The script uses only the Python standard library. It accepts `webcal://`,
-`webcals://`, `http://`, and `https://` feed URLs, and converts webcal URLs to
-HTTPS before downloading. The CSV includes event IDs, names, start/end times,
-all-day status, location, description, event URL, and any recurrence rule.
-Each VEVENT is exported as one row; recurring rules are recorded but not
-expanded into separate occurrences.
-
-Run the parser tests with:
-
-```sh
-python3 -m unittest -v test_sportsengine_export
 ```

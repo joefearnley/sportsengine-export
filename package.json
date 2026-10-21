@@ -1,0 +1,27 @@
+{
+  "name": "sportsengine-export",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "npm run build:server && concurrently -k \"node dist-server/server.js\" \"vite\"",
+    "build": "npm run build:server && vite build",
+    "build:server": "tsc -p tsconfig.json",
+    "start": "node dist-server/server.js",
+    "test": "tsx -e 'import \"./src/calendar.test.ts\"; import \"./src/database.test.ts\"; import \"./src/categories.test.ts\";'"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.2.0",
+    "express": "^5.1.0",
+    "ical.js": "^2.2.1"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/express": "^5.0.3",
+    "@types/node": "^22.15.30",
+    "concurrently": "^9.2.0",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3",
+    "vite": "^6.4.4"
+  }
+}
