@@ -43,5 +43,11 @@ npm test
 The original command-line CSV exporter is still available:
 
 ```sh
-python3 sportsengine_export.py 'webcal://ical.sportngin.com/v3/calendar/ical?team_ids=YOUR_TEAM_ID'
+python3 cli/sportsengine_export.py 'webcal://ical.sportngin.com/v3/calendar/ical?team_ids=YOUR_TEAM_ID'
+```
+
+Run its tests with:
+
+```sh
+python3 -m unittest discover -s cli -v
 ```

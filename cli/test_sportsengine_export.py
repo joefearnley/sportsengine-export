@@ -1,3 +1,5 @@
+"""Tests for the SportsEngine iCalendar CSV exporter."""
+
 import unittest
 
 from sportsengine_export import normalize_calendar_url, parse_events
