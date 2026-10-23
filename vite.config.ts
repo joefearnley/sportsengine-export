@@ -1,4 +1,5 @@
 import { defineConfig } from "vite";
+import { resolve } from "node:path";
 
 export default defineConfig({
   root: "src/client",
@@ -10,5 +11,11 @@ export default defineConfig({
   build: {
     outDir: "../../dist",
     emptyOutDir: true,
+    rollupOptions: {
+      input: {
+        main: resolve("src/client/index.html"),
+        schedule: resolve("src/client/schedule/index.html"),
+      },
+    },
   },
 });

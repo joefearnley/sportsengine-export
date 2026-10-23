@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#202427" />
+    <title>Team Schedule</title>
+  </head>
+  <body>
+    <main class="page">
+      <section class="intro schedule-intro">
+        <p class="eyebrow">TEAM SCHEDULE</p>
+        <h1 id="schedule-team-name">Team Schedule</h1>
+        <p class="intro-copy">Events from your SportsEngine calendar.</p>
+      </section>
+
+      <section class="schedule" aria-labelledby="schedule-heading">
+        <div class="schedule-heading">
+          <div class="card-heading">
+            <div class="step">01</div>
+            <div>
+              <h2 id="schedule-heading">Schedule</h2>
+              <p id="sync-status">Loading schedule…</p>
+            </div>
+          </div>
+          <a id="export-button" class="export-button" href="/api/export.csv">
+            <span aria-hidden="true">↓</span> Download CSV
+          </a>
+        </div>
+        <div class="filter-row">
+          <label class="search-box">
+            <span aria-hidden="true">⌕</span>
+            <input id="search" type="search" placeholder="Search events or locations" />
+          </label>
+          <div id="category-filters" class="category-filters" role="group" aria-label="Filter events by type">
+            <button class="category-filter" type="button" data-category="Games" aria-pressed="true">
+              <span>Games</span><span class="filter-count">0</span>
+            </button>
+            <button class="category-filter" type="button" data-category="Other Events" aria-pressed="false">
+              <span>Other Events</span><span class="filter-count">0</span>
+            </button>
+            <button class="category-filter" type="button" data-category="All" aria-pressed="false">
+              <span>All</span><span class="filter-count">0</span>
+            </button>
+          </div>
+          <span id="event-count" class="event-count">0 EVENTS</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">DATE</th>
+                <th scope="col">EVENT</th>
+                <th scope="col">TIME</th>
+                <th scope="col">LOCATION</th>
+              </tr>
+            </thead>
+            <tbody id="events-body"></tbody>
+          </table>
+          <div id="empty-state" class="empty-state">
+            <div class="empty-icon" aria-hidden="true">↗</div>
+            <h3>Your next game starts here.</h3>
+            <p>Import a calendar feed to fill in the schedule.</p>
+          </div>
+        </div>
+      </section>
+      <footer>Made for the moments between the whistles.</footer>
+    </main>
+    <script type="module" src="/schedule-view.ts"></script>
+  </body>
+</html>

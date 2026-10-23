@@ -20,13 +20,21 @@ export function createApp(databasePath: string, webRoot?: string) {
 
   app.post("/api/import", async (request, response) => {
     const url = request.body?.url;
+    const teamName =
+      typeof request.body?.teamName === "string" ? request.body.teamName.trim() : "";
     if (typeof url !== "string" || !url.trim()) {
       response.status(400).json({ error: "Calendar URL is required." });
       return;
     }
+    if (!teamName || teamName.length > 100) {
+      response.status(400).json({
+        error: "Team name is required and must be 100 characters or fewer.",
+      });
+      return;
+    }
     try {
       const result = await loadCalendar(url);
-      database.replaceEvents(result.events);
+      database.replaceEvents(result.events, teamName);
       response.json({
         count: result.events.length,
         importedAt: database.getStatus().lastImportedAt,
@@ -44,14 +52,16 @@ export function createApp(databasePath: string, webRoot?: string) {
 
   app.get("/api/export.csv", (_request, response) => {
     const rows = database.getEvents();
+    const teamName = database.getStatus().teamName ?? "";
     const csvCell = (value: string) => {
       const safeValue = /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
       return `"${safeValue.replaceAll('"', '""')}"`;
     };
     const csv = [
-      EVENT_FIELDS.join(","),
+      ["team_name", ...EVENT_FIELDS].join(","),
       ...rows.map((event) =>
-        EVENT_FIELDS.map((field) => csvCell(event[field])).join(","),
+        [csvCell(teamName), ...EVENT_FIELDS.map((field) => csvCell(event[field]))]
+          .join(","),
       ),
     ].join("\r\n");
     response

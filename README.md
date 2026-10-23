@@ -17,9 +17,12 @@ npm run dev
 
 Open the local address printed by Vite (normally `http://localhost:5173`).
 Paste the SportsEngine calendar link beginning with `webcal://` and choose
-**Import schedule**. The calendar URL is saved in this browser for next time.
-The feed is fetched by the local backend, which stores its events in
-`data/events.sqlite`. Use **Download CSV** to export the stored rows.
+**Import schedule**. Enter the team name associated with the calendar; it is
+saved with the import and included in the CSV export. The calendar URL and
+team name are also saved in this browser for next time. The feed is fetched
+by the local backend, which stores its events in `data/events.sqlite`. Use
+**Download CSV** to export the stored rows.
+Open `/schedule/` to view the saved team name and schedule directly.
 
 The server only accepts the HTTPS/webcal feed host `ical.sportngin.com` and
 binds to localhost. It does not require a SportsEngine password.
