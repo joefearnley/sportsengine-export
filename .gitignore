@@ -3,3 +3,12 @@ dist/
 dist-server/
 data/
 *.csv
+
+# Local Docker overrides and persisted container data
+docker-compose.override.yml
+docker-compose.override.yaml
+compose.override.yml
+compose.override.yaml
+docker-data/
+docker-volumes/
+Dockerfile
