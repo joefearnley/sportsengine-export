@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express from "express";
 import { mkdirSync } from "node:fs";
 import { resolve } from "node:path";
@@ -88,6 +89,7 @@ const { app } = createApp(
   process.env.NODE_ENV === "production" ? webRoot : undefined,
 );
 const port = Number(process.env.PORT ?? 3001);
-app.listen(port, "127.0.0.1", () => {
-  console.log(`SportsEngine exporter listening at http://127.0.0.1:${port}`);
+const host = process.env.HOST ?? "127.0.0.1";
+app.listen(port, host, () => {
+  console.log(`SportsEngine exporter listening at http://${host}:${port}`);
 });

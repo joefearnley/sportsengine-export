@@ -15,6 +15,10 @@ npm install
 npm run dev
 ```
 
+The server reads its bind address from `HOST` in `.env`. The default is
+`127.0.0.1` (local only); set `HOST=0.0.0.0` to allow Docker or other network
+interfaces to reach it. Only use `0.0.0.0` on a trusted network.
+
 Open the local address printed by Vite (normally `http://localhost:5173`).
 Paste the SportsEngine calendar link beginning with `webcal://` and choose
 **Import schedule**. Enter the team name associated with the calendar; it is

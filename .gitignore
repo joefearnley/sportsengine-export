@@ -13,3 +13,6 @@ docker-data/
 docker-volumes/
 Dockerfile
 nginx/
+.env
+.env.*
+!.env.example
