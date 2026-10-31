@@ -5,6 +5,7 @@ import {
   matchesCategory,
   type EventCategory,
 } from "../categories.js";
+import { getClosestWeekendGames } from "../weekend.js";
 
 interface CalendarEvent {
   uid: string;
@@ -38,6 +39,12 @@ const categoryButtons = Array.from(
 const eventsBody = document.querySelector<HTMLTableSectionElement>("#events-body")!;
 const emptyState = document.querySelector<HTMLDivElement>("#empty-state")!;
 const exportButton = document.querySelector<HTMLAnchorElement>("#export-button")!;
+const weekendDateRange =
+  document.querySelector<HTMLParagraphElement>("#weekend-date-range");
+const weekendGamesContainer =
+  document.querySelector<HTMLDivElement>("#weekend-games");
+const weekendEmpty =
+  document.querySelector<HTMLParagraphElement>("#weekend-empty");
 
 let events: CalendarEvent[] = [];
 let selectedCategory: EventCategory = "Games";
@@ -69,7 +76,54 @@ function formatTime(start: string, end: string, allDay: string): string {
   return `${startTime} – ${endTime}`;
 }
 
+function formatWeekendDateRange(startDate: Date, endDate: Date): string {
+  const monthOptions: Intl.DateTimeFormatOptions = { month: "short" };
+  const dayOptions: Intl.DateTimeFormatOptions = { day: "numeric" };
+  const startMonth = startDate.toLocaleDateString(undefined, monthOptions);
+  const endMonth = endDate.toLocaleDateString(undefined, monthOptions);
+  const startDay = startDate.toLocaleDateString(undefined, dayOptions);
+  const endDay = endDate.toLocaleDateString(undefined, dayOptions);
+  return startMonth === endMonth
+    ? `${startMonth} ${startDay}–${endDay}`
+    : `${startMonth} ${startDay}–${endMonth} ${endDay}`;
+}
+
+function renderClosestWeekendGames(): void {
+  if (!weekendDateRange || !weekendGamesContainer || !weekendEmpty) return;
+
+  const weekend = getClosestWeekendGames(events, new Date());
+  weekendDateRange.textContent = formatWeekendDateRange(
+    weekend.startDate,
+    weekend.endDate,
+  );
+  weekendGamesContainer.replaceChildren();
+  weekendEmpty.hidden = weekend.events.length > 0;
+
+  for (const event of weekend.events) {
+    const card = document.createElement("article");
+    card.className = "weekend-game";
+
+    const date = document.createElement("p");
+    date.className = "weekend-game-date";
+    date.textContent = formatDate(event.start);
+
+    const name = document.createElement("h3");
+    name.textContent = event.summary || "Untitled game";
+
+    const details = document.createElement("p");
+    details.className = "weekend-game-details";
+    details.textContent = [
+      formatTime(event.start, event.end, event.all_day),
+      event.location,
+    ].filter(Boolean).join(" · ");
+
+    card.append(date, name, details);
+    weekendGamesContainer.append(card);
+  }
+}
+
 function renderEvents(): void {
+  renderClosestWeekendGames();
   const query = searchInput.value.trim().toLocaleLowerCase();
   const categoryCounts = new Map<EventCategory, number>(
     EVENT_CATEGORIES.map((category) => [category, 0]),

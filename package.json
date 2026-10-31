@@ -8,7 +8,7 @@
     "build": "npm run build:server && vite build",
     "build:server": "tsc -p tsconfig.json",
     "start": "node dist-server/server.js",
-    "test": "tsx -e 'import \"./src/calendar.test.ts\"; import \"./src/database.test.ts\"; import \"./src/categories.test.ts\";'"
+    "test": "tsx -e 'import \"./src/calendar.test.ts\"; import \"./src/database.test.ts\"; import \"./src/categories.test.ts\"; import \"./src/weekend.test.ts\";'"
   },
   "dependencies": {
     "better-sqlite3": "^12.2.0",
