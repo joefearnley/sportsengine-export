@@ -39,6 +39,8 @@ const categoryButtons = Array.from(
 const eventsBody = document.querySelector<HTMLTableSectionElement>("#events-body")!;
 const emptyState = document.querySelector<HTMLDivElement>("#empty-state")!;
 const exportButton = document.querySelector<HTMLAnchorElement>("#export-button")!;
+const pdfExportButton =
+  document.querySelector<HTMLAnchorElement>("#pdf-export-button")!;
 const weekendDateRange =
   document.querySelector<HTMLParagraphElement>("#weekend-date-range");
 const weekendGamesContainer =
@@ -212,6 +214,7 @@ export async function refreshSchedule(): Promise<void> {
     ? `Last imported ${new Date(status.lastImportedAt).toLocaleString()}`
     : "Import a calendar to see your events here.";
   exportButton.setAttribute("aria-disabled", String(status.count === 0));
+  pdfExportButton.setAttribute("aria-disabled", String(status.count === 0));
   renderEvents();
 }
 

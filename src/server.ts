@@ -4,6 +4,7 @@ import { mkdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { loadCalendar } from "./calendar.js";
 import { openDatabase } from "./database.js";
+import { createSchedulePdf } from "./pdf.js";
 import { EVENT_FIELDS, type CalendarEvent } from "./types.js";
 
 export function createApp(databasePath: string, webRoot?: string) {
@@ -69,6 +70,25 @@ export function createApp(databasePath: string, webRoot?: string) {
       .type("text/csv")
       .attachment("sportsengine-events.csv")
       .send(csv);
+  });
+
+  app.get("/api/export.pdf", async (_request, response) => {
+    const events = database.getEvents();
+    const teamName = database.getStatus().teamName;
+    if (events.length === 0 || !teamName) {
+      response.status(404).json({ error: "Import a team calendar before exporting a PDF." });
+      return;
+    }
+    try {
+      const pdf = await createSchedulePdf(events, teamName);
+      response
+        .type("application/pdf")
+        .attachment("sportsengine-schedule.pdf")
+        .send(pdf);
+    } catch (error) {
+      console.error("Could not generate schedule PDF:", error);
+      response.status(500).json({ error: "Could not generate the schedule PDF." });
+    }
   });
 
   if (webRoot) {

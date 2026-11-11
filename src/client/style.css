@@ -135,6 +135,7 @@ button:disabled { opacity: .65; cursor: wait; transform: none; }
 .weekend-empty { margin: 17px 0 0; padding: 14px; border-radius: 8px; background: #fcfcfb; color: #777b7d; font-size: 12px; }
 .weekend-empty[hidden] { display: none; }
 .schedule-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.export-actions { display: flex; align-items: center; gap: 9px; }
 .export-button { min-height: 37px; padding: 0 13px; font-size: 11px; }
 .export-button[aria-disabled="true"] { pointer-events: none; opacity: .48; }
 .export-button span { font-size: 16px; }
@@ -212,7 +213,9 @@ footer { padding: 24px 0 30px; color: #92918d; font: 10px "DM Mono", monospace; 
   .form-row { flex-direction: column; }
   .form-row button { min-height: 42px; }
   .schedule-heading { align-items: flex-start; flex-direction: column; }
-  .schedule-heading > .export-button { display: none; }
+  .export-actions { width: 100%; }
+  #export-button { display: none; }
+  #pdf-export-button { width: 100%; min-height: 42px; }
   .filter-row { align-items: stretch; gap: 10px; }
   .search-box { width: 100%; }
   .category-filters { flex: 1 1 100%; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
