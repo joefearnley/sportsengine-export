@@ -161,27 +161,57 @@ export function createSchedulePdf(
               width: columnWidth - 10,
             });
 
-          dayEvents.slice(0, 3).forEach((event, index) => {
+          let displayedHeight = 0;
+          let displayedCount = 0;
+          for (const event of dayEvents) {
+            const showLocation =
+              categoryForEvent(event.summary) === "Games" &&
+              Boolean(event.location.trim());
+            const itemHeight = showLocation ? 18 : 15;
+            const remainingCount = dayEvents.length - displayedCount - 1;
+            if (
+              displayedHeight + itemHeight +
+                (remainingCount > 0 ? 11 : 0) > rowHeight - 19
+            ) {
+              break;
+            }
+
             const color = categoryForEvent(event.summary) === "Games"
               ? "#cf2944"
               : "#92784b";
+            const eventY = y + 19 + displayedHeight;
             document
               .fillColor(color)
               .font("Helvetica")
               .fontSize(7.5)
-              .text(eventLabel(event), x + 5, y + 19 + index * 16, {
+              .text(eventLabel(event), x + 5, eventY, {
                 width: columnWidth - 10,
-                height: 15,
+                height: 9,
                 ellipsis: true,
               });
-          });
-          if (dayEvents.length > 3) {
+            if (showLocation) {
+              document
+                .fillColor("#777b7d")
+                .font("Helvetica")
+                .fontSize(6)
+                .text(event.location, x + 5, eventY + 9, {
+                  width: columnWidth - 10,
+                  height: 8,
+                  ellipsis: true,
+                });
+            }
+            displayedHeight += itemHeight;
+            displayedCount += 1;
+          }
+          const hiddenCount = dayEvents.length - displayedCount;
+          if (hiddenCount > 0) {
             document
               .fillColor("#777b7d")
               .font("Helvetica-Oblique")
-              .fontSize(7)
-              .text(`+${dayEvents.length - 3} more`, x + 5, y + rowHeight - 12, {
+              .fontSize(6.5)
+              .text(`+${hiddenCount} more`, x + 5, y + 19 + displayedHeight, {
                 width: columnWidth - 10,
+                height: 9,
                 ellipsis: true,
               });
           }
@@ -197,7 +227,7 @@ export function createSchedulePdf(
         .fillColor("#92918d")
         .font("Helvetica")
         .fontSize(7)
-        .text("Generated from your SportsEngine schedule", left, pageHeight - 40, {
+        .text("Generated from your SportsEngine schedule", left, pageHeight - 48, {
           width: contentWidth,
           align: "right",
         });

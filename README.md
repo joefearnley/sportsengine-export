@@ -1,6 +1,6 @@
 # SportsEngine Schedule
 
-A small local web app that imports a SportsEngine iCalendar feed into SQLite,
+A small local web app that imports a SportsEngine iCalendar feed into a JSON file,
 shows the events in a searchable list, and downloads them as CSV.
 The schedule defaults to Games and can also show Other Events (Practice,
 Skills & Drills, Goalie Clinic, and Power Skate) or All events. It can also be
@@ -24,7 +24,10 @@ Paste the SportsEngine calendar link beginning with `webcal://` and choose
 **Import schedule**. Enter the team name associated with the calendar; it is
 saved with the import and included in the CSV export. The calendar URL and
 team name are also saved in this browser for next time. The feed is fetched
-by the local backend, which stores its events in `data/events.sqlite`. Use
+by the local backend, which stores its events in `data/events.json`. If an
+existing `data/events.sqlite` is present and no JSON database exists, the app
+migrates the saved schedule to JSON on startup and leaves the SQLite file
+untouched as a backup. Use
 **Download CSV** to export the stored rows, or **Download PDF** for a
 month-by-month calendar of the saved events.
 Open `/schedule/` to view the saved team name and schedule directly.

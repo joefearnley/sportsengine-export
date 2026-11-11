@@ -1,7 +1,13 @@
 import Database from "better-sqlite3";
-import { mkdirSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  renameSync,
+  writeFileSync,
+} from "node:fs";
 import { dirname } from "node:path";
-import type { CalendarEvent } from "./types.js";
+import { EVENT_FIELDS, type CalendarEvent } from "./types.js";
 
 export interface DatabaseHandle {
   close(): void;
@@ -14,82 +20,141 @@ export interface DatabaseHandle {
   replaceEvents(events: CalendarEvent[], teamName: string): void;
 }
 
-export function openDatabase(filePath: string): DatabaseHandle {
+interface DatabaseData {
+  version: 1;
+  events: CalendarEvent[];
+  lastImportedAt: string | null;
+  teamName: string | null;
+}
+
+function isCalendarEvent(value: unknown): value is CalendarEvent {
+  if (typeof value !== "object" || value === null) return false;
+  const event = value as Record<string, unknown>;
+  return EVENT_FIELDS.every((field) => typeof event[field] === "string");
+}
+
+function validateData(value: unknown): DatabaseData {
+  if (typeof value !== "object" || value === null) {
+    throw new Error("The JSON schedule database is invalid.");
+  }
+  const data = value as Record<string, unknown>;
+  if (
+    data.version !== 1 ||
+    !Array.isArray(data.events) ||
+    !data.events.every(isCalendarEvent) ||
+    !(typeof data.lastImportedAt === "string" || data.lastImportedAt === null) ||
+    !(typeof data.teamName === "string" || data.teamName === null)
+  ) {
+    throw new Error("The JSON schedule database is invalid.");
+  }
+  return {
+    version: 1,
+    events: data.events,
+    lastImportedAt: data.lastImportedAt,
+    teamName: data.teamName,
+  };
+}
+
+function readLegacyDatabase(filePath: string): DatabaseData {
+  const db = new Database(filePath, { readonly: true });
+  try {
+    const tables = db
+      .prepare("SELECT name FROM sqlite_master WHERE type = 'table'")
+      .all() as Array<{ name: string }>;
+    const tableNames = new Set(tables.map((table) => table.name));
+    const events = tableNames.has("events")
+      ? (db.prepare(`
+          SELECT uid, summary, start, end, all_day, location, description, url,
+                 recurrence_rule
+          FROM events
+          ORDER BY start, summary
+        `).all() as CalendarEvent[])
+      : [];
+    let state: { lastImportedAt: string; teamName: string | null } | undefined;
+    if (tableNames.has("sync_state")) {
+      const columns = db
+        .prepare("PRAGMA table_info(sync_state)")
+        .all() as Array<{ name: string }>;
+      const hasTeamName = columns.some((column) => column.name === "team_name");
+      state = (db.prepare(`
+        SELECT last_imported_at AS lastImportedAt${
+          hasTeamName ? ", team_name AS teamName" : ", NULL AS teamName"
+        }
+        FROM sync_state WHERE id = 1
+      `).all() as Array<{
+        lastImportedAt: string;
+        teamName: string | null;
+      }>)[0];
+    }
+    return {
+      version: 1,
+      events,
+      lastImportedAt: state?.lastImportedAt ?? null,
+      teamName: state?.teamName || null,
+    };
+  } finally {
+    db.close();
+  }
+}
+
+export function openDatabase(
+  filePath: string,
+  legacySqlitePath?: string,
+): DatabaseHandle {
   mkdirSync(dirname(filePath), { recursive: true });
-  const db = new Database(filePath);
-  db.pragma("journal_mode = WAL");
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS events (
-      uid TEXT PRIMARY KEY,
-      summary TEXT NOT NULL,
-      start TEXT NOT NULL,
-      end TEXT NOT NULL,
-      all_day TEXT NOT NULL,
-      location TEXT NOT NULL,
-      description TEXT NOT NULL,
-      url TEXT NOT NULL,
-      recurrence_rule TEXT NOT NULL
-    );
-    CREATE TABLE IF NOT EXISTS sync_state (
-      id INTEGER PRIMARY KEY CHECK (id = 1),
-      last_imported_at TEXT NOT NULL,
-      team_name TEXT NOT NULL DEFAULT ''
-    );
-  `);
-  const syncStateColumns = db
-    .prepare("PRAGMA table_info(sync_state)")
-    .all() as Array<{ name: string }>;
-  if (!syncStateColumns.some((column) => column.name === "team_name")) {
-    db.exec("ALTER TABLE sync_state ADD COLUMN team_name TEXT NOT NULL DEFAULT ''");
+  let data: DatabaseData;
+  if (existsSync(filePath)) {
+    data = validateData(JSON.parse(readFileSync(filePath, "utf8")));
+  } else if (legacySqlitePath && existsSync(legacySqlitePath)) {
+    data = readLegacyDatabase(legacySqlitePath);
+    writeData(data);
+  } else {
+    data = {
+      version: 1,
+      events: [],
+      lastImportedAt: null,
+      teamName: null,
+    };
+    writeData(data);
   }
 
-  const selectEvents = db.prepare(
-    `SELECT uid, summary, start, end, all_day, location, description, url,
-            recurrence_rule
-     FROM events
-     ORDER BY start, summary`,
-  );
-  const replaceEvents = db.transaction(
-    (events: CalendarEvent[], teamName: string) => {
-      db.prepare("DELETE FROM events").run();
-      const insert = db.prepare(`
-        INSERT INTO events
-          (uid, summary, start, end, all_day, location, description, url, recurrence_rule)
-        VALUES
-          (@uid, @summary, @start, @end, @all_day, @location, @description, @url, @recurrence_rule)
-      `);
-      for (const event of events) {
-        insert.run(event);
-      }
-      db.prepare(`
-        INSERT INTO sync_state (id, last_imported_at, team_name)
-        VALUES (1, @lastImportedAt, @teamName)
-        ON CONFLICT(id) DO UPDATE SET
-          last_imported_at = excluded.last_imported_at,
-          team_name = excluded.team_name
-      `).run({ lastImportedAt: new Date().toISOString(), teamName });
-    },
-  );
+  function writeData(nextData: DatabaseData): void {
+    const temporaryPath = `${filePath}.tmp`;
+    writeFileSync(temporaryPath, `${JSON.stringify(nextData, null, 2)}\n`);
+    renameSync(temporaryPath, filePath);
+  }
 
   return {
-    close: () => db.close(),
-    getEvents: () => selectEvents.all() as CalendarEvent[],
-    getStatus: () => {
-      const count = (db.prepare("SELECT COUNT(*) AS count FROM events").get() as {
-        count: number;
-      }).count;
-      const state = db
-        .prepare(
-          `SELECT last_imported_at AS lastImportedAt, team_name AS teamName
-           FROM sync_state WHERE id = 1`,
-        )
-        .get() as { lastImportedAt: string; teamName: string } | undefined;
-      return {
-        count,
-        lastImportedAt: state?.lastImportedAt ?? null,
-        teamName: state?.teamName || null,
+    close: () => {},
+    getEvents: () => [...data.events].sort(
+      (left, right) =>
+        left.start.localeCompare(right.start) ||
+        left.summary.localeCompare(right.summary),
+    ),
+    getStatus: () => ({
+      count: data.events.length,
+      lastImportedAt: data.lastImportedAt,
+      teamName: data.teamName,
+    }),
+    replaceEvents: (events, teamName) => {
+      const eventIds = new Set<string>();
+      for (const event of events) {
+        if (!isCalendarEvent(event)) {
+          throw new Error("The calendar contains an invalid event.");
+        }
+        if (eventIds.has(event.uid)) {
+          throw new Error(`Duplicate event ID: ${event.uid}`);
+        }
+        eventIds.add(event.uid);
+      }
+      const nextData: DatabaseData = {
+        version: 1,
+        events: [...events],
+        lastImportedAt: new Date().toISOString(),
+        teamName,
       };
+      writeData(nextData);
+      data = nextData;
     },
-    replaceEvents,
   };
 }

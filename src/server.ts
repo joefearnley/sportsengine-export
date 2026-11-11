@@ -7,9 +7,13 @@ import { openDatabase } from "./database.js";
 import { createSchedulePdf } from "./pdf.js";
 import { EVENT_FIELDS, type CalendarEvent } from "./types.js";
 
-export function createApp(databasePath: string, webRoot?: string) {
+export function createApp(
+  databasePath: string,
+  webRoot?: string,
+  legacySqlitePath?: string,
+) {
   const app = express();
-  const database = openDatabase(databasePath);
+  const database = openDatabase(databasePath, legacySqlitePath);
   app.use(express.json({ limit: "8kb" }));
 
   app.get("/api/events", (_request, response) => {
@@ -105,8 +109,9 @@ const dataDirectory = resolve("data");
 mkdirSync(dataDirectory, { recursive: true });
 const webRoot = resolve("dist");
 const { app } = createApp(
-  resolve(dataDirectory, "events.sqlite"),
+  resolve(dataDirectory, "events.json"),
   process.env.NODE_ENV === "production" ? webRoot : undefined,
+  resolve(dataDirectory, "events.sqlite"),
 );
 const port = Number(process.env.PORT ?? 3001);
 const host = process.env.HOST ?? "127.0.0.1";
