@@ -7,6 +7,15 @@ import { openDatabase } from "./database.js";
 import { createSchedulePdf } from "./pdf.js";
 import { EVENT_FIELDS, type CalendarEvent } from "./types.js";
 
+function schedulePdfFilename(teamName: string): string {
+  const safeTeamName = teamName
+    .trim()
+    .replace(/\s+/g, "_")
+    .replace(/[<>:"/\\|?*\u0000-\u001f]/g, "")
+    .replace(/[. ]+$/g, "");
+  return `${safeTeamName || "team"}-schedule.pdf`;
+}
+
 export function createApp(
   databasePath: string,
   webRoot?: string,
@@ -87,7 +96,7 @@ export function createApp(
       const pdf = await createSchedulePdf(events, teamName);
       response
         .type("application/pdf")
-        .attachment("sportsengine-schedule.pdf")
+        .attachment(schedulePdfFilename(teamName))
         .send(pdf);
     } catch (error) {
       console.error("Could not generate schedule PDF:", error);
